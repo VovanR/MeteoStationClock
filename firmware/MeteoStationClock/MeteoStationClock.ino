@@ -168,6 +168,17 @@ void setup() {
     diagnosticStatus = false;
   }
 
+
+  // Clock
+  Serial.print(F("RTC... "));
+  if (rtc.begin()) {
+    Serial.println(F("OK"));
+  } else {
+    Serial.println(F("ERROR"));
+    diagnosticStatus = false;
+  }
+
+
   if (diagnosticStatus == false) {
     for(;;); // Don't proceed, loop forever
   }
@@ -197,6 +208,26 @@ void setup() {
     pressure_array[i] = Pressure; // забить весь массив текущим давлением
     time_array[i] = i; // забить массив времени числами 0 - 5
   }
+
+
+  // Clock
+  if (RESET_CLOCK || rtc.lostPower()) {
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+
+  now = rtc.now();
+  seconds = now.second();
+  minutes = now.minute();
+  hours = now.hour();
+
+
+  Serial.println(F("DATE:"));
+  Serial.println(now.dayOfTheWeek());
+  Serial.println(now.month());
+  Serial.println(now.year());
+  Serial.println(seconds);
+  Serial.println(minutes);
+  Serial.println(hours);
 
   // Button
   pinMode(BTN_PIN, INPUT_PULLUP);
@@ -347,11 +378,14 @@ void drawSensors2() {
 void renderClock() {
   display.setTextSize(2);
   display.setCursor(72, 0);
-  display.println("22");
+  if (hours < 10) {
+    display.print("0");
+  }
+  display.println(hours);
   display.setCursor(92, 0);
   display.println(":");
   display.setCursor(102, 0);
-  display.println("24");
+  display.println(minutes);
 }
 
 void renderDate() {
@@ -359,19 +393,22 @@ void renderDate() {
 
   // Day number
   display.setCursor(72, 16);
-  display.println("04");
+  if (now.day() < 10) {
+    display.print("0");
+  }
+  display.println(now.day());
 
   // Day of week
   display.setCursor(90, 16);
-  int dayOfWeek = 3;
+  int dayOfWeek = now.dayOfTheWeek();
   display.println(dayNames[dayOfWeek]);
 
   // Month
   display.setCursor(72, 24);
-  int monthNumber = 10;
+  int monthNumber = now.month();
   display.println(monthNames[monthNumber]);
 
   // Year
   display.setCursor(96, 24);
-  display.println("2019");
+  display.println(now.year());
 }
